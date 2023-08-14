@@ -1,13 +1,5 @@
 const fs = require('fs');
-
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8'));
-
-const checkBody = (req, res, next) => {
-  if (req.body.name && req.body.price) {
-    return next();
-  }
-  res.status(403).json({ status: 'fail', message: 'missing name or price' })
-}
+const Tour = require('../models/tourModel');
 
 const checkId = (req, res, next, val) => {
   console.log(`id is ${val}`);
@@ -19,42 +11,53 @@ const checkId = (req, res, next, val) => {
   next();
 }
 
-const getAllTours = (req, res) => {
-  console.log(req.requestTime)
-  res.status(200).json({
-    status: 'success',
-    requestedAt: req.requestTime,
-    results: tours.length,
-    data: { tours }
-  });
+const getAllTours = async (req, res) => {
+  try {
+    // 若不帶參數，就會取到整個 collection
+    const tours = await Tour.find();
+    res.status(200).json({
+      status: 'success',
+      results: tours.length,
+      data: { tours }
+    });
+  } catch(err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Invalid'
+    })
+  }
 }
 
-const createTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = {
-    id: newId,
-    ...req.body,
-  }
-  tours.push(newTour);
-  fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`, JSON.stringify(tours), (err) => {
-    // 201 表示 created
+const createTour = async (req, res) => {
+  try {
+    const newTour = await Tour.create(req.body);
     res.status(201).json({
       status: 'success',
       data: { tour: newTour }
+    });
+  } catch(err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Invalid data sent'
     })
-  });
+  }
 }
 
-const getTour = (req, res) => {
+const getTour = async (req, res) => {
   const { id } = req.params;
-  const tour = tours.find((el) => Number(el.id) === Number(id));
-  if (!tour) {
-    return res.status(404).json({ status: 'fail', message: 'Invalid ID' })
+  try {
+    // tour.findOne({ _id: id }) 與下面的 findById 等價
+    const tour = await Tour.findById(id);
+    res.status(200).json({
+      status: 'success',
+      data: { tour }
+    });
+  } catch(err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err
+    })
   }
-  res.status(200).json({
-    status: 'success',
-    data: { tour }
-  });
 }
 
 const updateTour = (req, res) => {
@@ -85,5 +88,4 @@ module.exports = {
   updateTour,
   deleteTour,
   checkId,
-  checkBody
 }
