@@ -1,4 +1,3 @@
-const fs = require('fs');
 const Tour = require('../models/tourModel');
 
 const checkId = (req, res, next, val) => {
@@ -38,7 +37,7 @@ const createTour = async (req, res) => {
   } catch(err) {
     res.status(400).json({
       status: 'fail',
-      message: 'Invalid data sent'
+      message: err
     })
   }
 }
