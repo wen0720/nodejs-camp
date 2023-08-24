@@ -12,18 +12,20 @@ const checkId = (req, res, next, val) => {
 
 const getAllTours = async (req, res) => {
   try {
+    console.log(req.query)
+
+    // BUILD QUERY
+    // 1) Filtering
     const queryObj = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields']
 
     // 排除不要 filter 的 query string
-    excludedFields.forEach((field) => {
-      delete queryObj[field];
-    });
+    excludedFields.forEach((field) => { delete queryObj[field]; });
 
-    console.log(queryObj)
-    // 若不帶參數，就會取到整個 collection，第一個參數是 filter
-    // BUILD QUERY
-    const query = Tour.find(queryObj);
+    // 2) Advanced filterring
+    // { difficulty: easy, duration: { $gte: 5 } }
+    const queryString = JSON.stringify(queryObj).replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    const query = Tour.find(JSON.parse(queryString));
 
 
     // EXCUTE QUERY
