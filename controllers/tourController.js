@@ -38,7 +38,7 @@ const getAllTours = async (req, res) => {
       // .sort('price ratingAverage') 可以透過多個值排序
     } else {
       // 如果沒傳排序，照 createdAt 排
-      query = query.sort('-createdAt')
+      query = query.sort('-_id')
     }
 
     // 3) Limit field
@@ -48,6 +48,19 @@ const getAllTours = async (req, res) => {
     } else {
       // 如果沒有傳 field，則預設回傳的東西在這裡設定
       query = query.select('-__v')
+    }
+
+    // 4) pagination
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numberTours = await Tour.countDocuments(); // 取得 tours 總數
+      if (skip >= numberTours) {
+        throw new Error('This page does not exist;')
+      }
     }
 
     // EXCUTE QUERY
