@@ -1,4 +1,5 @@
 const Tour = require('../models/tourModel');
+const APIFeature = require('../utils/apiFeatures');
 
 const checkId = (req, res, next, val) => {
   console.log(`id is ${val}`);
@@ -21,59 +22,15 @@ exports.aliasTopTours = (req, res, next) => {
 
 exports.getAllTours = async (req, res) => {
   try {
-    // console.log(req.query)
-
     // BUILD QUERY
-    // 1A) Filtering
-    const queryObj = { ...req.query };
-    const excludedFields = ['page', 'sort', 'limit', 'fields']
-
-    // 排除不要 filter 的 query string
-    excludedFields.forEach((field) => { delete queryObj[field]; });
-
-    // 1B) Advanced filterring
-    // { difficulty: easy, duration: { $gte: 5 } }
-    const queryString = JSON.stringify(queryObj).replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    let query = Tour.find(JSON.parse(queryString));
-
-
-    // 2) Sorting
-    if (req.query.sort) {
-      // { sort: 'price' } 由小到大
-      // { sort: '-price' } 由大到小
-      const sortBy = req.query.sort.split(',').join(' ')
-      console.log(req.query.sort)
-      query = query.sort(sortBy);
-      // .sort('price ratingAverage') 可以透過多個值排序
-    } else {
-      // 如果沒傳排序，照 createdAt 排
-      query = query.sort('-_id')
-    }
-
-    // 3) Limit field
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields)
-    } else {
-      // 如果沒有傳 field，則預設回傳的東西在這裡設定
-      query = query.select('-__v')
-    }
-
-    // 4) pagination
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 100;
-    const skip = (page - 1) * limit;
-    query = query.skip(skip).limit(limit);
-
-    if (req.query.page) {
-      const numberTours = await Tour.countDocuments(); // 取得 tours 總數
-      if (skip >= numberTours) {
-        throw new Error('This page does not exist;')
-      }
-    }
+    const features = new APIFeature(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate()
 
     // EXCUTE QUERY
-    const tours = await query
+    const tours = await features.query
 
     res.status(200).json({
       status: 'success',
