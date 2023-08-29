@@ -10,7 +10,16 @@ const checkId = (req, res, next, val) => {
   next();
 }
 
-const getAllTours = async (req, res) => {
+exports.aliasTopTours = (req, res, next) => {
+  req.query = {
+    sort: '-ratinSAverage,price',
+    limit: '5',
+    fields: 'name,price,ratinSAverage,summary,difficulty'
+  }
+  next();
+}
+
+exports.getAllTours = async (req, res) => {
   try {
     // console.log(req.query)
 
@@ -79,7 +88,7 @@ const getAllTours = async (req, res) => {
   }
 }
 
-const createTour = async (req, res) => {
+exports.createTour = async (req, res) => {
   try {
     const newTour = await Tour.create(req.body);
     res.status(201).json({
@@ -94,7 +103,7 @@ const createTour = async (req, res) => {
   }
 }
 
-const getTour = async (req, res) => {
+exports.getTour = async (req, res) => {
   const { id } = req.params;
   try {
     // tour.findOne({ _id: id }) 與下面的 findById 等價
@@ -111,7 +120,7 @@ const getTour = async (req, res) => {
   }
 }
 
-const updateTour = async (req, res) => {
+exports.updateTour = async (req, res) => {
   const { id } = req.params;
   try {
     const tour = await Tour.findByIdAndUpdate(
@@ -128,7 +137,7 @@ const updateTour = async (req, res) => {
   }
 }
 
-const deleteTour = async (req, res) => {
+exports.deleteTour = async (req, res) => {
   const { id } = req.params;
   try {
     await Tour.findByIdAndDelete(id);
@@ -139,13 +148,4 @@ const deleteTour = async (req, res) => {
   } catch(err) {
     res.status(400).json({ status: 'fail', message: err });
   }
-}
-
-module.exports = {
-  getAllTours,
-  createTour,
-  getTour,
-  updateTour,
-  deleteTour,
-  checkId,
 }
