@@ -9,11 +9,14 @@ const {
   updateTour,
   deleteTour,
   aliasTopTours,
+  getTourStats,
 } = tourController;
 
 // router.param('id', checkId)
 
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours)
+
+router.route('/tour-stats').get(getTourStats)
 
 router.route('/')
   .get(getAllTours)

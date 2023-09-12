@@ -106,3 +106,45 @@ exports.deleteTour = async (req, res) => {
     res.status(400).json({ status: 'fail', message: err });
   }
 }
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratinSAverage: { $gte: 4.5 } },
+      },
+      {
+        $group: {
+          _id: { $toUpper: '$difficulty' }, // 設定 null 代表把所有的 doc 當作一個群組
+          numTours: { $sum: 1 }, // 每一個 doc +1，所以也就是計算 doc 的總量
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratinSAverage' }, // 原本的 key 要給 $ 字號
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' }
+        }
+      },
+      {
+        $sort: {
+          avgPrice: 1, // 1 代表 ascending
+        }
+      },
+      // {
+      //   $match: {
+      //     _id: { $ne: 'EASY' }  // ne 是 not equal 的意思，所以會排除掉 EASY
+      //   }
+      // }
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: stats,
+    })
+  } catch (err) {
+    console.log(err.message)
+    res.status(404).json({
+      status: 'fail',
+      message: err
+    })
+  }
+}
