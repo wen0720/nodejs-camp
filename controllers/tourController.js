@@ -148,3 +148,53 @@ exports.getTourStats = async (req, res) => {
     })
   }
 }
+
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+    const plans = await Tour.aggregate([
+      { $unwind: '$startDates' }, // 會依每個 doc startDates 的數量展開
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTourCounts: { $sum: 1 },
+          tours: { $push: '$name' } // $push 代表是一個 array，這邊就是會找到在同個月份的 tour name
+        }
+      },
+      {
+        $addFields: { month: '$_id' }
+      },
+      {
+        $project: {
+          _id: 0, // 0 表示會被移除
+        }
+      },
+      {
+        $sort: {
+          numTourCounts: -1 // descending
+        }
+      },
+      {
+        $limit: 12 // 最多 12 筆
+      }
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: plans
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err
+    })
+  }
+}
