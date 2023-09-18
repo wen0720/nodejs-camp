@@ -52,7 +52,20 @@ const tourSchema = new mongoose.Schema({
     select: false // query 時，不會回傳
   },
   startDates: [Date]
+}, {
+  toJSON: { virtuals: true }, // 在取得 json 時，要使用 vitural proprty
+  toObject: { virtuals: true } // 在取得 object 時，要使用 vitural proprty
 });
+
+// Document Middlewares: run before .save() and .create()
+
+
+// virtual property 是 mongoose 提供的功能，
+// 似乎有點像是 vue 的 computed
+// 這個值不會存進資料庫裡，當去取資料了之後，
+tourSchema.virtual('durationWeeks').get(function() {
+  return this.duration / 7;
+})
 
 const Tour = mongoose.model('Tour', tourSchema);
 
