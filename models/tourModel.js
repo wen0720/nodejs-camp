@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -51,13 +52,12 @@ const tourSchema = new mongoose.Schema({
     default: Date.now(),
     select: false // query 時，不會回傳
   },
-  startDates: [Date]
+  startDates: [Date],
+  slug: String
 }, {
   toJSON: { virtuals: true }, // 在取得 json 時，要使用 vitural proprty
   toObject: { virtuals: true } // 在取得 object 時，要使用 vitural proprty
 });
-
-// Document Middlewares: run before .save() and .create()
 
 
 // virtual property 是 mongoose 提供的功能，
@@ -65,6 +65,26 @@ const tourSchema = new mongoose.Schema({
 // 這個值不會存進資料庫裡，當去取資料了之後，
 tourSchema.virtual('durationWeeks').get(function() {
   return this.duration / 7;
+})
+
+// DOCUMENT MIDDLEWARE
+// pre(): run before .save() and .create()
+// tourSchema.pre('save', function(next) {
+//   // console.log(this) // 這邊這個 this 會拿到的是當前的 document
+//   this.slug = slugify(this.name, {
+//     lower: true,
+//   })
+//   next();
+// })
+
+// tourSchema.pre('save', function(next) {
+//   console.log('document is going to save');
+//   next();
+// });
+
+tourSchema.post('save', function(doc, next) {
+  console.log(doc); // 這個是剛存進資料庫的那筆 document
+  next();
 })
 
 const Tour = mongoose.model('Tour', tourSchema);
