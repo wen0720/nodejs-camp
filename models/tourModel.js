@@ -53,7 +53,11 @@ const tourSchema = new mongoose.Schema({
     select: false // query 時，不會回傳
   },
   startDates: [Date],
-  slug: String
+  slug: String,
+  sceretTour: {
+    type: Boolean,
+    default: false,
+  }
 }, {
   toJSON: { virtuals: true }, // 在取得 json 時，要使用 vitural proprty
   toObject: { virtuals: true } // 在取得 object 時，要使用 vitural proprty
@@ -69,23 +73,39 @@ tourSchema.virtual('durationWeeks').get(function() {
 
 // DOCUMENT MIDDLEWARE
 // pre(): run before .save() and .create()
-// tourSchema.pre('save', function(next) {
-//   // console.log(this) // 這邊這個 this 會拿到的是當前的 document
-//   this.slug = slugify(this.name, {
-//     lower: true,
-//   })
-//   next();
-// })
+tourSchema.pre('save', function(next) {
+  // console.log(this) // 這邊這個 this 會拿到的是當前的 document
+  this.slug = slugify(this.name, {
+    lower: true,
+  })
+  next();
+})
 
 // tourSchema.pre('save', function(next) {
 //   console.log('document is going to save');
 //   next();
 // });
 
-tourSchema.post('save', function(doc, next) {
-  console.log(doc); // 這個是剛存進資料庫的那筆 document
+// tourSchema.post('save', function(doc, next) {
+//   console.log(doc); // 這個是剛存進資料庫的那筆 document
+//   next();
+// })
+
+// ^find 泛指 find, findOne, findById...
+tourSchema.pre(/^find/, function(next) {
+ // this 這邊 this 拿到的會是 query
+ this.find({ sceretTour: { $ne: true } });
+
+ this.start = +new Date();
+ next()
+});
+
+tourSchema.post(/^find/, function(docs, next) {
+  console.log(`query use ${+new Date() - this.start} ms`);
   next();
-})
+});
+
+
 
 const Tour = mongoose.model('Tour', tourSchema);
 
