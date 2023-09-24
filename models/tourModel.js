@@ -91,6 +91,8 @@ tourSchema.pre('save', function(next) {
 //   next();
 // })
 
+
+// QUERY MIDDLEWARE
 // ^find 泛指 find, findOne, findById...
 tourSchema.pre(/^find/, function(next) {
  // this 這邊 this 拿到的會是 query
@@ -105,6 +107,17 @@ tourSchema.post(/^find/, function(docs, next) {
   next();
 });
 
+
+// AGGREGATE MIDDLEWARE
+tourSchema.pre('aggregate', function(next) {
+  // console.log(this) // 這個是 Aggregate obj
+  this.pipeline().unshift({
+    $match: {
+      sceretTour: { $ne: true }
+    }
+  });
+  next();
+})
 
 
 const Tour = mongoose.model('Tour', tourSchema);
