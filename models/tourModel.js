@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const validator = require('validator');
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -7,6 +8,9 @@ const tourSchema = new mongoose.Schema({
     required: [true, 'A tour must have name'], // 第 2 個值表示 error message
     unique: true,
     trim: true,
+    maxLength: [40, 'A tour name must have less or equal than 40 characters'],
+    minLength: [10, 'A tour name must have more or equal than 10 characters'],
+    // validate: [validator.isAlpha, 'tour name must only contain characters']
   },
   duration: {
     type: Number,
@@ -18,11 +22,17 @@ const tourSchema = new mongoose.Schema({
   },
   difficulty: {
     type: String,
-    required: [true, 'A tour must have diffculty']
+    required: [true, 'A tour must have diffculty'],
+    enum: {
+      values: ['easy', 'medium', 'difficult'],
+      message: 'Difficulty is either: easy, medium, difficult',
+    }
   },
   ratinSAverage: {
     type: Number,
-    default: 4.5
+    default: 4.5,
+    min: [1, 'Rating must be above 1.0'],
+    max: [5, 'Rating must be above 5.0']
   },
   ratingsQuantity: {
     type: Number,
@@ -32,7 +42,18 @@ const tourSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'A tour must have price']
   },
-  priceDiscount: Number,
+  priceDiscount: {
+    type: Number,
+    // custom validate
+    validate: {
+      validator(val) {
+        // this 只有在 creat new doc 的時候，才會指向 current doc，update 的時候不會
+        return val < this.price;
+      },
+      // {VALUE} 可以取得當前的 priceDiscount
+      message: 'priceDiscount({VALUE}) should be below requlat price'
+    }
+  },
   summary: {
     type: String,
     trim: true,
