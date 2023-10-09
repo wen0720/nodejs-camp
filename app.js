@@ -1,9 +1,11 @@
 const fs = require('fs');
 const express = require('express');
 const morgan = require('morgan');
+const AppError = require('./utils/appError');
 
 const tourRouter = require('./routes/tourRoutes')
 const userRouter = require('./routes/userRoutes')
+const errorController = require('./controllers/errorController');
 
 const app = express();
 
@@ -26,26 +28,9 @@ app.use('/api/v1/users', userRouter);
 
 // handle unhandle routes
 app.all('*', (req, res, next) => {
-  // res.status(400).json({
-  //   status: 'fail',
-  //   message: `Can't find ${req.originalUrl}.`
-  // })
-
-  const err = new Error(`Can't find ${req.originalUrl} on this server`);
-  err.status = 'fail';
-  err.statusCode = 404;
-
-  next(err); // express 會一律把丟進 next 的參數視為 err
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404)); // express 會一律把丟進 next 的參數視為 err
 });
 
-app.use((err, req, res, next) => {
-  err.statusCode =  err.statusCode || 500;
-  err.status = err.status || 'error';
-
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message
-  })
-});
+app.use(errorController);
 
 module.exports = app;
