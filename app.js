@@ -28,6 +28,7 @@ app.use('/api/v1/users', userRouter);
 
 // handle unhandle routes
 app.all('*', (req, res, next) => {
+  console.log('all')
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404)); // express 會一律把丟進 next 的參數視為 err
 });
 
